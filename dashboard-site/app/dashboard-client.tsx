@@ -3,6 +3,7 @@
 // Интерактивная часть дашборда отделена от серверной точки входа страницы.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import HealthDashboard from './health-dashboard';
 
 const SHEET_ID = '10nUim3pWy3qxovj7YTqZ_Z5pOojFEgCusXPNps65wyM';
 const SOURCE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=0#gid=0`;
@@ -182,6 +183,7 @@ function smoothPath(points: { x: number; y: number }[]) {
 }
 
 export default function Home() {
+  const [view, setView] = useState<'result' | 'health'>('result');
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [month, setMonth] = useState(0);
   const [metricId, setMetricId] = useState('revenue');
@@ -256,6 +258,8 @@ export default function Home() {
     y: 130 - (item.deviation / deviationScale) * 104,
   })), [deviationData, deviationScale]);
 
+  if (view === 'health') return <HealthDashboard onShowResults={() => setView('result')} />;
+
   return (
     <main className="dashboard-shell">
       <header className="topbar">
@@ -263,6 +267,10 @@ export default function Home() {
           <p className="eyebrow">Ecom · отчёт собственника</p>
           <h1>Результат</h1>
         </div>
+        <nav className="dashboard-nav" aria-label="Выбор дашборда">
+          <button type="button" className="active">Результат</button>
+          <button type="button" onClick={() => setView('health')}>Здоровье</button>
+        </nav>
         <div className="source-state">
           <span className={`live-dot ${error ? 'is-error' : ''}`} aria-hidden="true" />
           <div>
