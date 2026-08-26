@@ -137,6 +137,7 @@ button { color: inherit; }
 .metric-caption { margin-top: 8px; color: var(--muted); font-size: 12px; }
 .metric-plan-row { margin-top: 28px; color: #a5b2c2; font-size: 12px; }
 .metric-plan-row strong { color: #8fc8ff; font-size: 13px; font-weight: 750; text-shadow: 0 0 18px rgba(85, 170, 255, .2); }
+.plan-value { color: #8fc8ff !important; text-shadow: 0 0 18px rgba(85, 170, 255, .2); }
 .progress-track { height: 6px; margin-top: 10px; overflow: hidden; border-radius: 99px; background: rgba(255, 255, 255, .075); }
 .progress-track span { display: block; height: 100%; border-radius: inherit; }
 .progress-track .good { background: var(--green); } .progress-track .warning { background: var(--amber); } .progress-track .risk { background: var(--red); } .progress-track .neutral { background: #667386; }

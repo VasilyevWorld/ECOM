@@ -263,7 +263,7 @@ function MarketplaceCard({ metric, week }: { metric: MarketplaceMetric; week: nu
           return (
             <div className="marketplace-row" key={store.name}>
               <div className="marketplace-name"><strong>{store.name}</strong><span className={storeTone}>{store.data.completion[week].display}</span></div>
-              <div className="marketplace-values"><span>План <strong>{shown(store.data.plan[week], metric.unit)}</strong></span><span>Факт <strong className={storeTone}>{shown(store.data.actual[week], metric.unit)}</strong></span></div>
+              <div className="marketplace-values"><span>План <strong className="plan-value">{shown(store.data.plan[week], metric.unit)}</strong></span><span>Факт <strong className={storeTone}>{shown(store.data.actual[week], metric.unit)}</strong></span></div>
             </div>
           );
         })}
@@ -377,7 +377,7 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
               <div className="operation-split"><span>Ozon<strong>{data?.lostRevenue.ozon[week].display ?? '—'}</strong></span><span>WildBerries<strong>{data?.lostRevenue.wildberries[week].display ?? '—'}</strong></span></div>
             </article>
             <article className="operation-card">
-              <h3>Оборачиваемость</h3><p>План — 45 дней</p>
+              <h3>Оборачиваемость</h3><p>План — <strong className="plan-value">45 дней</strong></p>
               <strong className={`operation-value ${turnoverTone}`}>{turnover?.display === '—' || !turnover ? '—' : `${turnover.display} дней`}</strong>
             </article>
             <article className="operation-card">
@@ -387,7 +387,7 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
             <article className="operation-card revenue-operation">
               <div className="operation-heading"><div><h3>Выполнение плана по выручке</h3><p>Динамика к прошлой неделе</p></div><span className={data?.revenue.trend[week].numeric === null ? 'neutral' : (data?.revenue.trend[week].numeric ?? 0) >= 0 ? 'good' : 'risk'}>{data?.revenue.trend[week].display ?? '—'}</span></div>
               <strong className={`operation-value ${revenueTone}`}>{revenueCompletion?.display ?? '—'}</strong>
-              <div className="operation-plan-fact"><span>План <strong>{data ? shown(data.revenue.plan[week], 'number') : '—'}</strong></span><span>Факт <strong className={revenueTone}>{data ? shown(data.revenue.actual[week], 'number') : '—'}</strong></span></div>
+              <div className="operation-plan-fact"><span>План <strong className="plan-value">{data ? shown(data.revenue.plan[week], 'number') : '—'}</strong></span><span>Факт <strong className={revenueTone}>{data ? shown(data.revenue.actual[week], 'number') : '—'}</strong></span></div>
             </article>
           </div>
         </section>
