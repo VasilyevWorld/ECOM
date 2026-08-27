@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const SHEET_ID = '10nUim3pWy3qxovj7YTqZ_Z5pOojFEgCusXPNps65wyM';
 const SOURCE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=1171665282#gid=1171665282`;
@@ -23,6 +23,7 @@ type MetricUnit = 'number' | 'percent';
 type MarketplaceMetric = {
   id: string;
   name: string;
+  shortName: string;
   description?: string;
   unit: MetricUnit;
   inverse?: boolean;
@@ -47,6 +48,7 @@ const marketplaceDefinitions = [
   {
     id: 'traffic',
     name: 'Количество привлеченных клиентов',
+    shortName: 'Привлечение',
     description: 'Сколько вошли в магазин',
     unit: 'number',
     overall: 2,
@@ -61,6 +63,7 @@ const marketplaceDefinitions = [
   {
     id: 'cart',
     name: 'Количество положивших в корзину',
+    shortName: 'Корзина',
     description: 'Скольких вошедших заинтересовал наш товар',
     unit: 'number',
     overall: 9,
@@ -75,6 +78,7 @@ const marketplaceDefinitions = [
   {
     id: 'orders',
     name: 'Количество желающих купить',
+    shortName: 'Заказы',
     description: 'Сколько клиентов выбрали нас и заказали товар',
     unit: 'number',
     overall: 16,
@@ -89,6 +93,7 @@ const marketplaceDefinitions = [
   {
     id: 'buyers',
     name: 'Количество купивших',
+    shortName: 'Покупатели',
     description: 'Сколько клиентов выкупили наш товар и отдали нам свои деньги',
     unit: 'number',
     overall: 23,
@@ -103,6 +108,7 @@ const marketplaceDefinitions = [
   {
     id: 'conversion',
     name: 'Конверсия в покупку',
+    shortName: 'Конверсия',
     unit: 'percent',
     overall: 30,
     ozonCompletion: 31,
@@ -116,6 +122,7 @@ const marketplaceDefinitions = [
   {
     id: 'average-check',
     name: 'Средний чек',
+    shortName: 'Средний чек',
     unit: 'number',
     overall: 39,
     ozonCompletion: 40,
@@ -129,6 +136,7 @@ const marketplaceDefinitions = [
   {
     id: 'ad-cost',
     name: 'Доля рекламных расходов',
+    shortName: 'Реклама',
     description: 'Чем ниже процент, тем лучше',
     unit: 'percent',
     inverse: true,
@@ -182,6 +190,7 @@ function parseHealthDashboard(table: DataTable): HealthDashboardData {
   const metrics: MarketplaceMetric[] = marketplaceDefinitions.map((definition) => ({
     id: definition.id,
     name: definition.name,
+    shortName: definition.shortName,
     description: 'description' in definition ? definition.description : undefined,
     unit: definition.unit,
     inverse: 'inverse' in definition ? definition.inverse : undefined,
@@ -243,6 +252,27 @@ function shown(cell: Cell, unit: MetricUnit) {
   return unit === 'percent' && !cell.display.includes('%') ? `${cell.display}%` : cell.display;
 }
 
+function smoothPath(points: { x: number; y: number }[]) {
+  if (!points.length) return '';
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  return points.reduce((path, point, index) => {
+    if (index === 0) return `M ${point.x} ${point.y}`;
+    const previous = points[index - 1];
+    const beforePrevious = points[index - 2] ?? previous;
+    const next = points[index + 1] ?? point;
+    const tension = 0.14;
+    const control1 = {
+      x: previous.x + (point.x - beforePrevious.x) * tension,
+      y: previous.y + (point.y - beforePrevious.y) * tension,
+    };
+    const control2 = {
+      x: point.x - (next.x - previous.x) * tension,
+      y: point.y - (next.y - previous.y) * tension,
+    };
+    return `${path} C ${control1.x} ${control1.y}, ${control2.x} ${control2.y}, ${point.x} ${point.y}`;
+  }, '');
+}
+
 function MarketplaceCard({ metric, week }: { metric: MarketplaceMetric; week: number }) {
   const tone = metric.inverse ? inverseTone : standardTone;
   const overallTone = tone(metric.overall[week]);
@@ -275,6 +305,7 @@ function MarketplaceCard({ metric, week }: { metric: MarketplaceMetric; week: nu
 export default function HealthDashboard({ onShowResults }: { onShowResults: () => void }) {
   const [data, setData] = useState<HealthDashboardData | null>(null);
   const [week, setWeek] = useState(0);
+  const [metricId, setMetricId] = useState('traffic');
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -330,6 +361,41 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
   const stockTone = !stock || stock.display === '—' ? 'neutral' : stock.numeric === 0 ? 'good' : 'risk';
   const revenueCompletion = data?.revenue.completion[week];
   const revenueTone = standardTone(revenueCompletion);
+  const chartMetrics = useMemo(() => {
+    if (!data) return [];
+    return [
+      ...data.funnel,
+      ...data.separate,
+      {
+        id: 'revenue',
+        name: 'Выполнение плана по выручке',
+        shortName: 'Выручка',
+        inverse: false,
+        overall: data.revenue.completion,
+      },
+    ];
+  }, [data]);
+  const chartMetric = useMemo(
+    () => chartMetrics.find((metric) => metric.id === metricId) ?? chartMetrics[0] ?? null,
+    [chartMetrics, metricId],
+  );
+  const deviationData = useMemo(() => {
+    if (!data || !chartMetric) return [];
+    const tone = chartMetric.inverse ? inverseTone : standardTone;
+    return data.weeks.flatMap((name, index) => {
+      const completion = asPercent(chartMetric.overall[index]);
+      if (completion === null) return [];
+      return [{ name, index, completion, deviation: completion - 100, tone: tone(chartMetric.overall[index]), label: chartMetric.overall[index].display }];
+    });
+  }, [chartMetric, data]);
+  const deviationScale = useMemo(() => {
+    const maximum = Math.max(...deviationData.map((item) => Math.abs(item.deviation)), 10);
+    return Math.ceil(maximum / 10) * 10;
+  }, [deviationData]);
+  const trendPoints = useMemo(() => deviationData.map((item, index) => ({
+    x: ((index + 0.5) / deviationData.length) * 1000,
+    y: 130 - (item.deviation / deviationScale) * 104,
+  })), [deviationData, deviationScale]);
 
   return (
     <main className="dashboard-shell">
@@ -389,6 +455,49 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
               <strong className={`operation-value ${revenueTone}`}>{revenueCompletion?.display ?? '—'}</strong>
               <div className="operation-plan-fact"><span>План <strong className="plan-value">{data ? shown(data.revenue.plan[week], 'number') : '—'}</strong></span><span>Факт <strong className={revenueTone}>{data ? shown(data.revenue.actual[week], 'number') : '—'}</strong></span></div>
             </article>
+          </div>
+        </section>
+
+        <section className="chart-section health-section" aria-labelledby="health-dynamics-title">
+          <div className="chart-section-heading">
+            <span className="section-kicker">Выполнение плана по неделям</span>
+            <h2 id="health-dynamics-title">Динамика</h2>
+          </div>
+          <div className="chart-panel">
+            <div className="panel-heading">
+              <div><span className="section-kicker">Процент выполнения плана</span><h3>{chartMetric?.name ?? 'Показатель'}</h3></div>
+              <div className="metric-switcher" aria-label="Выбор показателя здоровья">
+                {chartMetrics.map((metric) => <button key={metric.id} type="button" className={metric.id === chartMetric?.id ? 'active' : ''} onClick={() => setMetricId(metric.id)}>{metric.shortName}</button>)}
+              </div>
+            </div>
+            {deviationData.length ? (
+              <div className="deviation-scroll">
+                <div className="deviation-plot" style={{ minWidth: `${Math.max(deviationData.length * 118, 620)}px` }} aria-label={`Выполнение плана по показателю ${chartMetric?.name ?? ''} по неделям`}>
+                  <span className="scale-label scale-top">{100 + deviationScale}%</span>
+                  <span className="scale-label scale-bottom">{Math.max(100 - deviationScale, 0)}%</span>
+                  <div className="plan-baseline"><span>План 100%</span></div>
+                  <svg className="trend-line" viewBox="0 0 1000 260" preserveAspectRatio="none" aria-hidden="true">
+                    <path d={smoothPath(trendPoints)} />
+                    {trendPoints.map((point, index) => <circle key={`${deviationData[index].name}-${index}`} className={deviationData[index].tone} cx={point.x} cy={point.y} r="6" vectorEffect="non-scaling-stroke" />)}
+                  </svg>
+                  <div className="deviation-columns" style={{ gridTemplateColumns: `repeat(${deviationData.length}, minmax(80px, 1fr))` }}>
+                    {deviationData.map((item) => {
+                      const height = Math.min((Math.abs(item.deviation) / deviationScale) * 104, 104);
+                      const pointTop = 130 - (item.deviation / deviationScale) * 104;
+                      return (
+                        <div className={`deviation-column ${item.index === week ? 'selected' : ''}`} key={`${item.name}-${item.index}`} aria-label={`${item.name}: выполнение плана ${item.label}`}>
+                          <strong className={`deviation-label ${item.deviation >= 0 ? 'above' : 'below'} ${item.tone}`} style={{ top: `${pointTop}px` }}>{item.label}</strong>
+                          <span className={`deviation-bar ${item.deviation >= 0 ? 'up' : 'down'} ${item.tone}`} style={{ height: `${height}px` }} aria-hidden="true" />
+                          <span className="deviation-month">{item.name.slice(0, 5)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="chart-empty"><strong>График пока недоступен</strong><span>Для показателя «{chartMetric?.name ?? 'Показатель'}» выполнение плана не задано.</span></div>
+            )}
           </div>
         </section>
 
