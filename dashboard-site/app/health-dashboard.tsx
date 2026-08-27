@@ -552,7 +552,7 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
                         const pointTop = 26 + height;
                         return (
                           <div className={`deviation-column ${item.index === week ? 'selected' : ''}`} key={`${item.name}-${item.index}`} aria-label={`${item.name}: ${item.label}`}>
-                            <strong className="deviation-label above risk" style={{ top: `${pointTop}px` }}>{item.label}</strong>
+                            <strong className="deviation-label currency-label risk" style={{ top: `${pointTop}px` }}>{item.label}</strong>
                             <span className="absolute-bar risk" style={{ height: `${height}px` }} aria-hidden="true" />
                             <span className="deviation-month">{item.name.slice(0, 5)}</span>
                           </div>

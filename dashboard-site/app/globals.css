@@ -183,6 +183,7 @@ button { color: inherit; }
 .deviation-label { position: absolute; z-index: 5; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 800; white-space: nowrap; }
 .deviation-label.above { transform: translate(-50%, -155%); }
 .deviation-label.below { transform: translate(-50%, 70%); }
+.deviation-label.currency-label { padding: 4px 7px; transform: translate(-50%, calc(-100% - 10px)); border: 1px solid rgba(255, 145, 136, .22); border-radius: 6px; background: rgba(11, 17, 27, .94); box-shadow: 0 4px 12px rgba(0, 0, 0, .32); }
 .deviation-label.good { color: var(--green); }
 .deviation-label.warning { color: var(--amber); }
 .deviation-label.risk { color: var(--red); }
