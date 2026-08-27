@@ -400,8 +400,8 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
         overall: data.weeks.map((_, index) => {
           const ozon = data.lostRevenue.ozon[index].numeric;
           const wildberries = data.lostRevenue.wildberries[index].numeric;
-          const total = ozon !== null && wildberries !== null ? ozon + wildberries : null;
-          return { display: total === null ? '—' : `${integerFormatter.format(total)} ₽`, numeric: total };
+          const total = ozon !== null && wildberries !== null ? Math.abs(ozon + wildberries) : null;
+          return { display: total === null ? '—' : `−${integerFormatter.format(total)} ₽`, numeric: total };
         }),
       },
       {
@@ -457,7 +457,7 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
   }, [chartData]);
   const trendPoints = useMemo(() => chartData.map((item, index) => ({
     x: ((index + 0.5) / chartData.length) * 1000,
-    y: chartMetric?.kind === 'currency' ? 234 - (Math.max(item.value, 0) / currencyScale) * 208 : 130 - (item.deviation / deviationScale) * 104,
+    y: chartMetric?.kind === 'currency' ? 26 + (Math.max(item.value, 0) / currencyScale) * 208 : 130 - (item.deviation / deviationScale) * 104,
   })), [chartData, chartMetric?.kind, currencyScale, deviationScale]);
 
   return (
@@ -538,10 +538,10 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
             {chartData.length ? (
               <div className="deviation-scroll">
                 <div className={`deviation-plot ${chartMetric?.kind === 'currency' ? 'absolute-plot' : ''}`} style={{ minWidth: `${Math.max(chartData.length * 118, 620)}px` }} aria-label={`${chartMetric?.name ?? 'Показатель'} по неделям`}>
-                  <span className="scale-label scale-top">{chartMetric?.kind === 'currency' ? `${integerFormatter.format(currencyScale)} ₽` : `${100 + deviationScale}%`}</span>
-                  <span className="scale-label scale-bottom">{chartMetric?.kind === 'currency' ? '0 ₽' : `${Math.max(100 - deviationScale, 0)}%`}</span>
+                  <span className="scale-label scale-top">{chartMetric?.kind === 'currency' ? '0 ₽' : `${100 + deviationScale}%`}</span>
+                  <span className="scale-label scale-bottom">{chartMetric?.kind === 'currency' ? `−${integerFormatter.format(currencyScale)} ₽` : `${Math.max(100 - deviationScale, 0)}%`}</span>
                   {chartMetric?.kind !== 'currency' && <div className="plan-baseline"><span>План 100%</span></div>}
-                  <svg className={`trend-line ${chartMetric?.kind === 'currency' ? 'currency-trend' : ''}`} viewBox="0 0 1000 260" preserveAspectRatio="none" aria-hidden="true">
+                  <svg className="trend-line" viewBox="0 0 1000 260" preserveAspectRatio="none" aria-hidden="true">
                     <path d={smoothPath(trendPoints)} />
                     {trendPoints.map((point, index) => <circle key={`${chartData[index].name}-${index}`} className={chartData[index].tone} cx={point.x} cy={point.y} r="6" vectorEffect="non-scaling-stroke" />)}
                   </svg>
@@ -549,7 +549,7 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
                     {chartData.map((item) => {
                       if (chartMetric?.kind === 'currency') {
                         const height = Math.max((Math.max(item.value, 0) / currencyScale) * 208, 2);
-                        const pointTop = 234 - height;
+                        const pointTop = 26 + height;
                         return (
                           <div className={`deviation-column ${item.index === week ? 'selected' : ''}`} key={`${item.name}-${item.index}`} aria-label={`${item.name}: ${item.label}`}>
                             <strong className="deviation-label above risk" style={{ top: `${pointTop}px` }}>{item.label}</strong>
