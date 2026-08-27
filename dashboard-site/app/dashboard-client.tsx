@@ -264,7 +264,7 @@ export default function Home() {
     <main className="dashboard-shell">
       <header className="topbar">
         <div>
-          <p className="eyebrow">Ecom · отчёт собственника</p>
+          <p className="eyebrow">CONTINENT • ECOM</p>
           <h1>Результат</h1>
         </div>
         <nav className="dashboard-nav" aria-label="Выбор дашборда">

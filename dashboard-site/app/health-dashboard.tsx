@@ -463,7 +463,7 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
   return (
     <main className="dashboard-shell">
       <header className="topbar">
-        <div><p className="eyebrow">Ecom · отчёт собственника</p><h1>Здоровье</h1></div>
+        <div><p className="eyebrow">CONTINENT • ECOM</p><h1>Здоровье</h1></div>
         <nav className="dashboard-nav" aria-label="Выбор дашборда">
           <button type="button" onClick={onShowResults}>Результат</button>
           <button type="button" className="active">Здоровье</button>
