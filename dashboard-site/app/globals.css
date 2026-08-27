@@ -122,7 +122,7 @@ button { color: inherit; }
 .metric-card.skeleton { background: linear-gradient(100deg, #121a27 20%, #1a2534 50%, #121a27 80%); background-size: 220% 100%; animation: shimmer 1.4s infinite linear; }
 @keyframes shimmer { to { background-position: -220% 0; } }
 .metric-heading, .metric-plan-row, .completion-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-.metric-heading h3 { margin: 0; font-size: 14px; font-weight: 700; }
+.metric-heading h3 { margin: 0; color: #aab9ca; font-size: 14px; font-weight: 680; }
 .trend-block { display: flex; align-items: flex-end; flex-direction: column; gap: 5px; text-align: right; }
 .trend-block small { max-width: 155px; color: #77869a; font-size: 9px; font-weight: 550; line-height: 1.25; }
 .trend { padding: 6px 8px; border: 1px solid transparent; border-radius: 8px; font-size: 11px; font-weight: 750; white-space: nowrap; }
