@@ -225,9 +225,13 @@ button { color: inherit; }
 .operation-card h3 { margin: 0; color: #c3cfdb; font-size: 16px; }
 .operation-card > p, .operation-heading p { margin: 7px 0 0; color: var(--muted); font-size: 11px; }
 .operation-value { display: block; margin-top: 42px; font-size: clamp(30px, 3vw, 42px); line-height: 1; letter-spacing: -.045em; }
+.operation-value-caption { display: block; margin-top: 8px; color: var(--muted); font-size: 11px; }
 .operation-split { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 30px; }
 .operation-split span { padding: 13px; border: 1px solid rgba(255, 255, 255, .075); border-radius: 11px; color: var(--muted); background: rgba(4, 9, 17, .25); font-size: 10px; }
 .operation-split strong { display: block; margin-top: 8px; overflow: hidden; color: var(--ink); font-size: 17px; text-overflow: ellipsis; white-space: nowrap; }
+.lost-revenue-card .operation-value { margin-top: 30px; }
+.lost-revenue-card .operation-split { margin-top: 22px; }
+.lost-revenue-card .operation-split strong { color: var(--red); font-size: 13px; }
 .operation-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .operation-heading > span { padding: 6px 8px; border: 1px solid rgba(255, 255, 255, .08); border-radius: 8px; background: rgba(255, 255, 255, .04); font-size: 11px; font-weight: 800; }
 .revenue-operation .operation-value { margin-top: 24px; }

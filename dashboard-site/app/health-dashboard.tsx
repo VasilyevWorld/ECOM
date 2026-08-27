@@ -253,6 +253,11 @@ function shown(cell: Cell, unit: MetricUnit) {
   return unit === 'percent' && !cell.display.includes('%') ? `${cell.display}%` : cell.display;
 }
 
+function shownCurrency(cell: Cell | undefined) {
+  if (!cell || cell.display === '—' || cell.numeric === null) return '—';
+  return `${integerFormatter.format(cell.numeric)} ₽`;
+}
+
 function smoothPath(points: { x: number; y: number }[]) {
   if (!points.length) return '';
   if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
@@ -362,6 +367,11 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
   const stockTone = !stock || stock.display === '—' ? 'neutral' : stock.numeric === 0 ? 'good' : 'risk';
   const revenueCompletion = data?.revenue.completion[week];
   const revenueTone = standardTone(revenueCompletion);
+  const lostRevenueOzon = data?.lostRevenue.ozon[week];
+  const lostRevenueWildberries = data?.lostRevenue.wildberries[week];
+  const lostRevenueTotal = lostRevenueOzon?.numeric !== null && lostRevenueOzon?.numeric !== undefined && lostRevenueWildberries?.numeric !== null && lostRevenueWildberries?.numeric !== undefined
+    ? lostRevenueOzon.numeric + lostRevenueWildberries.numeric
+    : null;
   const chartMetrics = useMemo(() => {
     if (!data) return [];
     return [
@@ -449,9 +459,11 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
         <section className="health-section" aria-labelledby="operations-title">
           <div className="health-section-heading"><span className="section-kicker">Риски и деньги</span><h2 id="operations-title">Операционные показатели</h2></div>
           <div className="operations-grid">
-            <article className="operation-card">
+            <article className="operation-card lost-revenue-card">
               <h3>Упущенная выручка</h3><p>За прошедшую неделю</p>
-              <div className="operation-split"><span>Ozon<strong>{data?.lostRevenue.ozon[week].display ?? '—'}</strong></span><span>WildBerries<strong>{data?.lostRevenue.wildberries[week].display ?? '—'}</strong></span></div>
+              <strong className="operation-value risk">{lostRevenueTotal === null ? '—' : `${integerFormatter.format(lostRevenueTotal)} ₽`}</strong>
+              <span className="operation-value-caption">Общее значение</span>
+              <div className="operation-split"><span>Ozon<strong>{shownCurrency(lostRevenueOzon)}</strong></span><span>WildBerries<strong>{shownCurrency(lostRevenueWildberries)}</strong></span></div>
             </article>
             <article className="operation-card">
               <h3>Оборачиваемость</h3><p>План — <strong className="plan-value">45 дней</strong></p>
