@@ -470,7 +470,7 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
         </nav>
         <div className="source-state">
           <span className={`live-dot ${error ? 'is-error' : ''}`} aria-hidden="true" />
-          <div><strong>{error ? 'Источник недоступен' : 'Автоматическое обновление'}</strong><span>{updatedAt ? `Проверено в ${updatedAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}` : 'Подключение к таблице'}</span></div>
+          <div><strong className={error ? '' : 'source-status-label'}>{error ? 'Источник недоступен' : 'Автоматическое обновление'}</strong><span>{updatedAt ? `Проверено в ${updatedAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}` : 'Подключение к таблице'}</span></div>
           <button type="button" onClick={() => void refresh()} disabled={loading}>{loading ? 'Обновление…' : 'Обновить'}</button>
         </div>
       </header>

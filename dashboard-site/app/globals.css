@@ -82,6 +82,7 @@ button { color: inherit; }
 }
 .source-state strong, .source-state span { display: block; }
 .source-state strong { font-size: 12px; font-weight: 650; }
+.source-state .source-status-label { color: #7f8da0; font-size: 11px; font-weight: 450; }
 .source-state span:not(.live-dot) { margin-top: 2px; color: #92a0b2; font-size: 11px; }
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 5px rgba(105, 223, 174, .12), 0 0 18px rgba(105, 223, 174, .55); }
 .live-dot.is-error { background: var(--red); box-shadow: 0 0 0 5px rgba(255, 120, 109, .12); }
