@@ -41,6 +41,14 @@ type HealthDashboardData = {
   revenue: { trend: Cell[]; plan: Cell[]; actual: Cell[]; completion: Cell[] };
   latest: number;
 };
+type HealthChartMetric = {
+  id: string;
+  name: string;
+  shortName: string;
+  inverse: boolean;
+  kind: 'completion' | 'currency';
+  overall: Cell[];
+};
 
 const integerFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
 const percentFormatter = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -372,16 +380,36 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
   const lostRevenueTotal = lostRevenueOzon?.numeric !== null && lostRevenueOzon?.numeric !== undefined && lostRevenueWildberries?.numeric !== null && lostRevenueWildberries?.numeric !== undefined
     ? lostRevenueOzon.numeric + lostRevenueWildberries.numeric
     : null;
-  const chartMetrics = useMemo(() => {
+  const chartMetrics = useMemo<HealthChartMetric[]>(() => {
     if (!data) return [];
     return [
-      ...data.funnel,
-      ...data.separate,
+      ...[...data.funnel, ...data.separate].map((metric) => ({
+        id: metric.id,
+        name: metric.name,
+        shortName: metric.shortName,
+        inverse: metric.inverse ?? false,
+        kind: 'completion' as const,
+        overall: metric.overall,
+      })),
+      {
+        id: 'lost-revenue',
+        name: 'Упущенная выручка',
+        shortName: 'Упущенная выручка',
+        inverse: false,
+        kind: 'currency',
+        overall: data.weeks.map((_, index) => {
+          const ozon = data.lostRevenue.ozon[index].numeric;
+          const wildberries = data.lostRevenue.wildberries[index].numeric;
+          const total = ozon !== null && wildberries !== null ? ozon + wildberries : null;
+          return { display: total === null ? '—' : `${integerFormatter.format(total)} ₽`, numeric: total };
+        }),
+      },
       {
         id: 'turnover',
         name: 'Оборачиваемость',
         shortName: 'Оборачиваемость',
         inverse: false,
+        kind: 'completion',
         overall: data.turnover.map((cell) => {
           const completion = cell.numeric && cell.numeric > 0 ? (45 / cell.numeric) * 100 : null;
           return { display: completion === null ? '—' : `${percentFormatter.format(completion)}%`, numeric: completion === null ? null : completion / 100 };
@@ -392,6 +420,7 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
         name: 'Выполнение плана по выручке',
         shortName: 'Выручка',
         inverse: false,
+        kind: 'completion',
         overall: data.revenue.completion,
       },
     ];
@@ -400,23 +429,36 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
     () => chartMetrics.find((metric) => metric.id === metricId) ?? chartMetrics[0] ?? null,
     [chartMetrics, metricId],
   );
-  const deviationData = useMemo(() => {
+  const chartData = useMemo(() => {
     if (!data || !chartMetric) return [];
+    if (chartMetric.kind === 'currency') {
+      return data.weeks.flatMap((name, index) => {
+        const value = chartMetric.overall[index].numeric;
+        if (value === null) return [];
+        return [{ name, index, value, deviation: 0, tone: 'risk', label: chartMetric.overall[index].display }];
+      });
+    }
     const tone = chartMetric.inverse ? inverseTone : standardTone;
     return data.weeks.flatMap((name, index) => {
       const completion = asPercent(chartMetric.overall[index]);
       if (completion === null) return [];
-      return [{ name, index, completion, deviation: completion - 100, tone: tone(chartMetric.overall[index]), label: chartMetric.overall[index].display }];
+      return [{ name, index, value: completion, deviation: completion - 100, tone: tone(chartMetric.overall[index]), label: chartMetric.overall[index].display }];
     });
   }, [chartMetric, data]);
   const deviationScale = useMemo(() => {
-    const maximum = Math.max(...deviationData.map((item) => Math.abs(item.deviation)), 10);
+    const maximum = Math.max(...chartData.map((item) => Math.abs(item.deviation)), 10);
     return Math.ceil(maximum / 10) * 10;
-  }, [deviationData]);
-  const trendPoints = useMemo(() => deviationData.map((item, index) => ({
-    x: ((index + 0.5) / deviationData.length) * 1000,
-    y: 130 - (item.deviation / deviationScale) * 104,
-  })), [deviationData, deviationScale]);
+  }, [chartData]);
+  const currencyScale = useMemo(() => {
+    const maximum = Math.max(...chartData.map((item) => item.value), 1);
+    const magnitude = 10 ** Math.floor(Math.log10(maximum));
+    const step = magnitude / 2;
+    return Math.ceil(maximum / step) * step;
+  }, [chartData]);
+  const trendPoints = useMemo(() => chartData.map((item, index) => ({
+    x: ((index + 0.5) / chartData.length) * 1000,
+    y: chartMetric?.kind === 'currency' ? 234 - (Math.max(item.value, 0) / currencyScale) * 208 : 130 - (item.deviation / deviationScale) * 104,
+  })), [chartData, chartMetric?.kind, currencyScale, deviationScale]);
 
   return (
     <main className="dashboard-shell">
@@ -483,28 +525,39 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
 
         <section className="chart-section health-section" aria-labelledby="health-dynamics-title">
           <div className="chart-section-heading">
-            <span className="section-kicker">Выполнение плана по неделям</span>
+            <span className="section-kicker">Показатели по неделям</span>
             <h2 id="health-dynamics-title">Динамика</h2>
           </div>
           <div className="chart-panel">
             <div className="panel-heading">
-              <div><span className="section-kicker">Процент выполнения плана</span><h3>{chartMetric?.name ?? 'Показатель'}</h3></div>
+              <div><span className="section-kicker">{chartMetric?.kind === 'currency' ? 'Итоговое значение' : 'Процент выполнения плана'}</span><h3>{chartMetric?.name ?? 'Показатель'}</h3></div>
               <div className="metric-switcher" aria-label="Выбор показателя здоровья">
                 {chartMetrics.map((metric) => <button key={metric.id} type="button" className={metric.id === chartMetric?.id ? 'active' : ''} onClick={() => setMetricId(metric.id)}>{metric.shortName}</button>)}
               </div>
             </div>
-            {deviationData.length ? (
+            {chartData.length ? (
               <div className="deviation-scroll">
-                <div className="deviation-plot" style={{ minWidth: `${Math.max(deviationData.length * 118, 620)}px` }} aria-label={`Выполнение плана по показателю ${chartMetric?.name ?? ''} по неделям`}>
-                  <span className="scale-label scale-top">{100 + deviationScale}%</span>
-                  <span className="scale-label scale-bottom">{Math.max(100 - deviationScale, 0)}%</span>
-                  <div className="plan-baseline"><span>План 100%</span></div>
-                  <svg className="trend-line" viewBox="0 0 1000 260" preserveAspectRatio="none" aria-hidden="true">
+                <div className={`deviation-plot ${chartMetric?.kind === 'currency' ? 'absolute-plot' : ''}`} style={{ minWidth: `${Math.max(chartData.length * 118, 620)}px` }} aria-label={`${chartMetric?.name ?? 'Показатель'} по неделям`}>
+                  <span className="scale-label scale-top">{chartMetric?.kind === 'currency' ? `${integerFormatter.format(currencyScale)} ₽` : `${100 + deviationScale}%`}</span>
+                  <span className="scale-label scale-bottom">{chartMetric?.kind === 'currency' ? '0 ₽' : `${Math.max(100 - deviationScale, 0)}%`}</span>
+                  {chartMetric?.kind !== 'currency' && <div className="plan-baseline"><span>План 100%</span></div>}
+                  <svg className={`trend-line ${chartMetric?.kind === 'currency' ? 'currency-trend' : ''}`} viewBox="0 0 1000 260" preserveAspectRatio="none" aria-hidden="true">
                     <path d={smoothPath(trendPoints)} />
-                    {trendPoints.map((point, index) => <circle key={`${deviationData[index].name}-${index}`} className={deviationData[index].tone} cx={point.x} cy={point.y} r="6" vectorEffect="non-scaling-stroke" />)}
+                    {trendPoints.map((point, index) => <circle key={`${chartData[index].name}-${index}`} className={chartData[index].tone} cx={point.x} cy={point.y} r="6" vectorEffect="non-scaling-stroke" />)}
                   </svg>
-                  <div className="deviation-columns" style={{ gridTemplateColumns: `repeat(${deviationData.length}, minmax(80px, 1fr))` }}>
-                    {deviationData.map((item) => {
+                  <div className="deviation-columns" style={{ gridTemplateColumns: `repeat(${chartData.length}, minmax(80px, 1fr))` }}>
+                    {chartData.map((item) => {
+                      if (chartMetric?.kind === 'currency') {
+                        const height = Math.max((Math.max(item.value, 0) / currencyScale) * 208, 2);
+                        const pointTop = 234 - height;
+                        return (
+                          <div className={`deviation-column ${item.index === week ? 'selected' : ''}`} key={`${item.name}-${item.index}`} aria-label={`${item.name}: ${item.label}`}>
+                            <strong className="deviation-label above risk" style={{ top: `${pointTop}px` }}>{item.label}</strong>
+                            <span className="absolute-bar risk" style={{ height: `${height}px` }} aria-hidden="true" />
+                            <span className="deviation-month">{item.name.slice(0, 5)}</span>
+                          </div>
+                        );
+                      }
                       const height = Math.min((Math.abs(item.deviation) / deviationScale) * 104, 104);
                       const pointTop = 130 - (item.deviation / deviationScale) * 104;
                       return (
@@ -519,7 +572,7 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
                 </div>
               </div>
             ) : (
-              <div className="chart-empty"><strong>График пока недоступен</strong><span>Для показателя «{chartMetric?.name ?? 'Показатель'}» выполнение плана не задано.</span></div>
+              <div className="chart-empty"><strong>График пока недоступен</strong><span>Для показателя «{chartMetric?.name ?? 'Показатель'}» данные не заданы.</span></div>
             )}
           </div>
         </section>

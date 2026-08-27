@@ -163,6 +163,7 @@ button { color: inherit; }
 .plan-baseline span { position: absolute; right: 0; top: -22px; color: #8fc8ff; font-size: 10px; font-weight: 700; }
 .trend-line { position: absolute; z-index: 4; top: 0; right: 24px; width: calc(100% - 48px); height: 260px; overflow: visible; pointer-events: none; }
 .trend-line path { fill: none; stroke: rgba(235, 243, 251, .72); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.trend-line.currency-trend path { stroke: rgba(255, 120, 109, .78); }
 .trend-line circle { stroke: #111925; stroke-width: 3; }
 .trend-line circle.good { fill: var(--green); }
 .trend-line circle.warning { fill: var(--amber); }
@@ -178,6 +179,8 @@ button { color: inherit; }
 .deviation-bar.warning { background: linear-gradient(180deg, #ffd182, #d99a38); box-shadow: 0 5px 22px rgba(255, 192, 103, .17); }
 .deviation-bar.risk { background: linear-gradient(180deg, #ff9188, #d9584e); box-shadow: 0 5px 22px rgba(255, 120, 109, .17); }
 .deviation-bar.neutral { background: #667386; }
+.absolute-bar { position: absolute; bottom: 26px; left: 50%; width: clamp(24px, 34%, 42px); min-height: 2px; transform: translateX(-50%); border-radius: 7px 7px 2px 2px; }
+.absolute-bar.risk { background: linear-gradient(180deg, #ff9188, #d9584e); box-shadow: 0 5px 22px rgba(255, 120, 109, .17); }
 .deviation-label { position: absolute; z-index: 5; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 800; white-space: nowrap; }
 .deviation-label.above { transform: translate(-50%, -155%); }
 .deviation-label.below { transform: translate(-50%, 70%); }
