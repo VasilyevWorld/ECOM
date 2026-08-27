@@ -43,6 +43,7 @@ type HealthDashboardData = {
 };
 
 const integerFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
+const percentFormatter = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 const marketplaceDefinitions = [
   {
@@ -366,6 +367,16 @@ export default function HealthDashboard({ onShowResults }: { onShowResults: () =
     return [
       ...data.funnel,
       ...data.separate,
+      {
+        id: 'turnover',
+        name: 'Оборачиваемость',
+        shortName: 'Оборачиваемость',
+        inverse: false,
+        overall: data.turnover.map((cell) => {
+          const completion = cell.numeric && cell.numeric > 0 ? (45 / cell.numeric) * 100 : null;
+          return { display: completion === null ? '—' : `${percentFormatter.format(completion)}%`, numeric: completion === null ? null : completion / 100 };
+        }),
+      },
       {
         id: 'revenue',
         name: 'Выполнение плана по выручке',
