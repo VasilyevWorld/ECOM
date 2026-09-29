@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const SHEET_ID = '10nUim3pWy3qxovj7YTqZ_Z5pOojFEgCusXPNps65wyM';
 const SOURCE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=1171665282#gid=1171665282`;
-const QUERY_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent('Здоровье')}&range=A1:K69&headers=0`;
+const QUERY_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent('Здоровье')}&range=A1:AB69&headers=0`;
 
 type DataTable = {
   getNumberOfColumns(): number;
@@ -194,7 +194,8 @@ function parseHealthDashboard(table: DataTable): HealthDashboardData {
   if (table.getNumberOfRows() < 59 || table.getNumberOfColumns() < 11) {
     throw new Error('Во вкладке «Здоровье» отсутствуют ожидаемые показатели.');
   }
-  const columns = Array.from({ length: 10 }, (_, index) => index + 1);
+  const columns = Array.from({ length: table.getNumberOfColumns() - 1 }, (_, index) => index + 1)
+    .filter((column) => readCell(table, 1, column).display !== '—');
   const cells = (row: number) => columns.map((column) => readCell(table, row, column));
   const metrics: MarketplaceMetric[] = marketplaceDefinitions.map((definition) => ({
     id: definition.id,
@@ -216,9 +217,10 @@ function parseHealthDashboard(table: DataTable): HealthDashboardData {
     },
   }));
   const revenue = { trend: cells(55), plan: cells(56), actual: cells(57), completion: cells(58) };
+  const buyers = metrics.find((metric) => metric.id === 'buyers');
   let latest = 0;
   columns.forEach((_, index) => {
-    if (revenue.actual[index].display !== '—') latest = index;
+    if (buyers?.ozon.actual[index].display !== '—' && buyers?.wildberries.actual[index].display !== '—') latest = index;
   });
   return {
     weeks: columns.map((column) => readCell(table, 1, column).display),
