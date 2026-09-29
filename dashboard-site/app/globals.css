@@ -196,7 +196,13 @@ button { color: inherit; }
 .chart-empty span { font-size: 12px; }
 
 .health-content { padding-top: 38px; }
-.health-week-switcher { max-width: 760px; overflow-x: auto; }
+.health-week-switcher {
+  max-width: 760px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.health-week-switcher::-webkit-scrollbar { display: none; }
 .health-week-switcher button { min-width: 58px; }
 .health-section { margin-top: 46px; }
 .health-section-heading { margin-bottom: 18px; padding-left: 12px; border-left: 2px solid rgba(98, 177, 255, .34); }
