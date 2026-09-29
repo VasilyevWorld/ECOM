@@ -197,7 +197,7 @@ button { color: inherit; }
 
 .health-content { padding-top: 38px; }
 .health-week-switcher {
-  max-width: 760px;
+  min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -251,6 +251,11 @@ button { color: inherit; }
 footer { display: flex; justify-content: space-between; gap: 20px; padding: 20px 2px 0; color: #748196; font-size: 11px; }
 footer a { color: #7fbeff; font-weight: 700; text-decoration: none; }
 footer a:hover { text-decoration: underline; }
+
+@media (min-width: 981px) and (max-width: 1200px) {
+  .health-content .period-row { align-items: flex-start; flex-direction: column; }
+  .health-week-switcher { width: 100%; }
+}
 
 @media (max-width: 980px) {
   .topbar { align-items: flex-start; flex-direction: column; }
